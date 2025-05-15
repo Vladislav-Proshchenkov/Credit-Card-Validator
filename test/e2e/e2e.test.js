@@ -1,49 +1,31 @@
 const puppeteer = require('puppeteer');
 const { startServer, stopServer } = require('../../server');
 
-describe('Credit Card Validator E2E Tests', () => {
+describe('Credit Card Validator', () => {
   let browser;
   let page;
-  const PORT = 9001; 
+  let server;
+  const PORT = 9001;
   const BASE_URL = `http://localhost:${PORT}`;
 
   beforeAll(async () => {
-    await startServer(PORT);
+    server = await startServer(PORT);
     browser = await puppeteer.launch({
       headless: true,
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage'
-      ],
-      timeout: 60000
+      args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
     page = await browser.newPage();
-  }, 60000);
+  }, 30000);
 
   afterAll(async () => {
-    try {
-      await page?.close();
-    } catch (e) {
-      console.error('Page close error:', e);
-    }
-    
-    try {
-      await browser?.close();
-    } catch (e) {
-      console.error('Browser close error:', e);
-    }
-    
-    try {
-      await stopServer();
-    } catch (e) {
-      console.error('Server stop error:', e);
-    }
+    await page.close();
+    await browser.close();
+    await stopServer();
   });
 
   test('should load the page', async () => {
-    await page.goto(BASE_URL, { waitUntil: 'networkidle2', timeout: 30000 });
+    await page.goto(BASE_URL, { waitUntil: 'networkidle2' });
     const title = await page.title();
     expect(title).toBe('Credit Card Validator');
-  }, 30000);
+  }, 10000);
 });
