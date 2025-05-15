@@ -18,7 +18,9 @@
         },
         "setupFilesAfterEnv": [
             "./jest.setup.js"
-        ]
+        ],
+        "testTimeout": 30000,
+        "globalTeardown": "<rootDir>/globalTeardown.js"
     },
     "devDependencies": {
         "@babel/core": "^7.17.10",

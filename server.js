@@ -1,52 +1,44 @@
-const express = require('express');
-const path = require('path');
 const http = require('http');
+const fs = require('fs');
+const path = require('path');
 
 let serverInstance = null;
 
-const startServer = async (port) => {
-  if (serverInstance) return serverInstance;
+module.exports = {
+  startServer: (port) => {
+    return new Promise((resolve) => {
+      if (serverInstance) return resolve(serverInstance);
 
-  const app = express();
-  
-  if (!Object.hasOwn) {
-    Object.hasOwn = function(obj, prop) {
-      return Object.prototype.hasOwnProperty.call(obj, prop);
-    };
-  }
-
-  app.use(express.static(path.join(__dirname, 'dist')));
-
-  serverInstance = http.createServer(app);
-  
-  return new Promise((resolve, reject) => {
-    serverInstance.listen(port, () => {
-      console.log(`Test server running on port ${port}`);
-      resolve(serverInstance);
-    }).on('error', reject);
-  });
-};
-
-const stopServer = async () => {
-  if (!serverInstance) return;
-  
-  return new Promise((resolve) => {
-    serverInstance.close(() => {
-      console.log('Test server stopped');
-      serverInstance = null;
-      resolve();
-    });
-    
-    setTimeout(() => {
-      if (serverInstance) {
-        serverInstance.close(() => {
-          console.log('Test server force stopped');
-          serverInstance = null;
-          resolve();
+      serverInstance = http.createServer((req, res) => {
+        const filePath = path.join(__dirname, 'dist', 
+          req.url === '/' ? 'index.html' : req.url);
+        
+        fs.readFile(filePath, (err, data) => {
+          if (err) {
+            res.writeHead(404);
+            return res.end('Not found');
+          }
+          res.writeHead(200);
+          res.end(data);
         });
-      }
-    }, 1000);
-  });
-};
+      });
 
-module.exports = { startServer, stopServer };
+      serverInstance.listen(port, () => {
+        console.log(`Test server running on port ${port}`);
+        resolve(serverInstance);
+      });
+    });
+  },
+
+  stopServer: () => {
+    return new Promise((resolve) => {
+      if (!serverInstance) return resolve();
+      
+      serverInstance.close(() => {
+        console.log('Test server stopped');
+        serverInstance = null;
+        resolve();
+      });
+    });
+  }
+};
